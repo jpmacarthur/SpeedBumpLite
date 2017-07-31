@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="SpeedBump.ProjectControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SpeedBump"
+             mc:Ignorable="d" 
+             d:DesignHeight="50" d:DesignWidth="600">
+    <Grid>
+        <StackPanel Orientation="Horizontal" Name="projectRow">
+            <CheckBox Name="runAll_CB" VerticalAlignment="Center" Margin="5,0,0,0"></CheckBox>
+            <Label Name="projectLabel" Content="{Binding ProjectName}" VerticalAlignment="Center" Width="100"></Label>
+            <Label Name="versionLabel" ToolTip="{Binding Timestamp}" Content="{Binding Version}" VerticalAlignment="Center" Width="70"></Label>
+            <StackPanel Orientation="Horizontal" Name="bumpTogglePanel" VerticalAlignment="Center" Margin="0,0,4,0">
+                <RadioButton Width="60" Name="majorBump_RB"  Content="Major"></RadioButton>
+                <RadioButton Width="60" Name="minorBump_RB"  Content="Minor"></RadioButton>
+                <RadioButton Width="60" Name="trivialBump_RB"  Content="Trivial" IsChecked="True"></RadioButton>
+
+            </StackPanel>
+            <ComboBox Name="actionDropdown" VerticalAlignment="Center" Margin="0,0,10,0" Width="70">
+                <ComboBoxItem IsSelected="True"></ComboBoxItem>
+                <ComboBoxItem>Prepare</ComboBoxItem>
+                <ComboBoxItem>Clean</ComboBoxItem>
+                <ComboBoxItem>Bump</ComboBoxItem>
+                <ComboBoxItem>Build</ComboBoxItem>
+                <ComboBoxItem>Deploy</ComboBoxItem>
+            </ComboBox>
+            <Button Content="Run" Name="run_BT" VerticalAlignment="Center" Width="60" Margin="0,0,10,0" Click="run_BT_Click"></Button>
+            <Button Content="Run All" Name="runAll_BT" VerticalAlignment="Center" Width="60"></Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

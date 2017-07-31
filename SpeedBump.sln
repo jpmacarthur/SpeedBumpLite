@@ -5,16 +5,32 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedBump", "SpeedBump\SpeedBump.csproj", "{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Common\Common.csproj", "{93B99F2A-4455-4BB1-AC03-19D262225964}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Debug|x64.ActiveCfg = Debug|x64
+		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Debug|x64.Build.0 = Debug|x64
 		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Release|x64.ActiveCfg = Release|x64
+		{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}.Release|x64.Build.0 = Release|x64
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Debug|x64.ActiveCfg = Debug|x64
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Debug|x64.Build.0 = Debug|x64
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|x64.ActiveCfg = Release|x64
+		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

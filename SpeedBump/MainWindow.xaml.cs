@@ -11,6 +11,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using LCP.Common.Json;
+using LCP.Common.Logging;
+using log4net;
 
 namespace SpeedBump
 {
@@ -19,9 +22,40 @@ namespace SpeedBump
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public MainWindow()
         {
+            Logger.Setup();
+            
             InitializeComponent();
+            DataContext = this;
+            Reload();
+            
         }
+
+        public void Reload()
+        {
+            log.Debug("Reload called");
+            projectRowsPanel.Children.Clear();
+            ProjectControlSource source = PersistableJson.Load<ProjectControlSource>();
+            log.Debug(source.Items + "items are in the project control source");
+            foreach(ProjectControlSourceItem item in source.Items)
+            {
+
+                ProjectControl row = new ProjectControl();
+                row.Reload(item, source);
+                row.trivialBump_RB.GroupName = "bumpGroup" + item.Project;
+                row.minorBump_RB.GroupName = "bumpGroup" + item.Project;
+                row.majorBump_RB.GroupName = "bumpGroup" + item.Project;
+
+                projectRowsPanel.Children.Add(row);
+                               
+            }
+            foreach(string host in source.FTPHosts)
+            {
+                ftp_Combobox.Items.Add(host);
+            }
+        }
+
     }
 }
