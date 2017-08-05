@@ -14,6 +14,7 @@ using System.Windows.Shapes;
 using LCP.Common.Json;
 using LCP.Common.Logging;
 using log4net;
+using System.Windows.Automation.Peers;
 
 namespace SpeedBump
 {
@@ -57,5 +58,18 @@ namespace SpeedBump
             }
         }
 
+        private void runAllProjects_Click(object sender, RoutedEventArgs e)
+        {
+            log.Debug("[USER ACTION] Run all projects called");
+            foreach(ProjectControl child in projectRowsPanel.Children)
+            {
+                if(child.runAll_CB.IsChecked == true)
+                {
+                    child.run_BT.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    
+                    //TODO Add logic for running all 
+                }
+            }
+        }
     }
 }

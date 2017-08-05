@@ -8,21 +8,27 @@ using System.IO;
 using System.Text.RegularExpressions;
 using log4net;
 using System.Diagnostics;
+using System.IO.Compression;
+using System.Net;
+using System.Windows;
 
 namespace SpeedBump.Deployment
 {
     public class DeploymentManager
     {
-        public DeploymentManager(ProjectControlSource source)
+        //TODO remove source and item from functions
+        public DeploymentManager(ProjectControlSource source, ProjectControlSourceItem item)
         {
             this.source = source;
+            this.item = item;
         }
 
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private VersionManager ver = new VersionManager();
         private ProjectControlSource source = new ProjectControlSource();
+        private ProjectControlSourceItem item = new ProjectControlSourceItem();
 
-        public Versioning.Version Bump(ProjectControlSourceItem item, ProjectControlSource source, string choice)
+        public Versioning.Version Bump(string choice)
         {
             VersionManager ver = new VersionManager();
             Versioning.Version newVersion = new Versioning.Version();
@@ -105,18 +111,110 @@ namespace SpeedBump.Deployment
 
             return buffer.ToString();
         }
-        public void Build(ProjectControlSourceItem item)
+        public void Build()
         {
+            log.Debug("[User Action] Build");
+            string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
             string command = source.CompileDir + @"\msbuild.exe";
-            string arguments = source.BaseDir + item.BaseDir +"\\" + item.Project + ".sln /p:Configuration=Debug";
+            string arguments = "\"" + source.BaseDir + item.BaseDir +"\\" + item.Project + ".sln\" /p:Configuration=Debug";
             log.Debug("command="+command);
             log.Debug("arguments=" + arguments);
             string result = run(command, arguments);
-            if(result.Contains("Build FAILED"))
+            if(result.Contains("Build FAILED") || result.Contains("MSBUILD : error"))
             {
                 throw new Exception("Build Failed");
             }
+            Regex warningCheck = new Regex(pattern);
+            if (warningCheck.IsMatch(result))
+            {
+                throw new Exception("Warning: Check Log");
+            }
             log.Debug(result);
+        }
+        public void Clean()
+        {
+            log.Debug("[User Action] Clean");
+            string projectPath = source.BaseDir + item.BaseDir + @"\";
+            string[] childpaths = Directory.GetDirectories(projectPath);
+            if (Directory.Exists(projectPath + @"\.vs\"))
+            {
+                Directory.Delete(projectPath + @"\.vs\", true);
+            }
+            if (Directory.Exists(projectPath + @"\TestResults\"))
+            {
+                Directory.Delete(projectPath + @"\TestResults\", true);
+            }
+
+            foreach (string child in childpaths)
+            {
+                if (Directory.Exists(child + "\\bin"))
+                {
+                    Directory.Delete(child + "\\bin\\", recursive: true);
+                }
+                if (Directory.Exists(child + "\\obj"))
+                {
+                    Directory.Delete(child + @"\obj\", recursive: true);
+                }
+            }
+        }
+        public void Prepare()
+        {
+            string projectPath = source.BaseDir + item.BaseDir;
+            string[] files = Directory.GetFiles(projectPath);
+            foreach(string file in files)
+            {
+                if (file.EndsWith(".sln"))
+                {
+                    File.WriteAllLines(file, File.ReadLines(file).Where(l => !l.Contains("Any CPU")).ToList());
+                }
+            }
+        }
+        private void copyDirectory()
+        {
+            MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir + @"\" + item.StageDir);
+            Versioning.Version itemVersion = ver.getchildVersion(assembly);
+            string SourcePath = source.BaseDir + item.BaseDir + "\\" + item.StageDir;
+
+            Directory.CreateDirectory(SourcePath + @"\bin\x64\copy\" + itemVersion.getVersion());
+            //Copy all the files & Replaces any files with the same name
+            foreach (string newPath in Directory.GetFiles(SourcePath + @"\bin\x64\Debug", "*.*",
+                SearchOption.AllDirectories))
+                File.Copy(newPath, newPath.Replace(SourcePath + @"\bin\x64\Debug", SourcePath + @"\bin\x64\copy\" + itemVersion.getVersion()), true);
+        }
+        private void Zip()
+        {
+            MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir + @"\" + item.StageDir);
+            Versioning.Version itemVersion = ver.getchildVersion(assembly);
+            string path = source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\copy\";
+            ZipFile.CreateFromDirectory(path, source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + itemVersion.getVersion() + ".zip"); 
+        }
+        private void upload()
+        {
+            MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir + @"\" + item.StageDir);
+            Versioning.Version itemVersion = ver.getchildVersion(assembly);
+            string remoteStagingDir = item.RemoteStagingDir; // get this from the algo control properties; you may have to create a new entry
+            string zipFilename = itemVersion.getVersion() + ".zip";
+            using (WebClient client = new WebClient())
+            {
+                client.Credentials = new NetworkCredential("staging@finbittech.com", "weakPa$$word100");
+                client.UploadFile("ftp://finbittech.com/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
+                client.Dispose();
+            }
+        }
+        private void remove()
+        {
+            MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir + @"\" + item.StageDir);
+            Versioning.Version itemVersion = ver.getchildVersion(assembly);
+            Directory.Delete(source.BaseDir + item.BaseDir + "\\" + item.StageDir + "\\" + @"bin\x64\copy", true);
+            File.Delete(source.BaseDir + item.BaseDir + "\\" + item.StageDir + "\\" + @"bin\x64\" + itemVersion.getVersion() + ".zip");       
+        }
+        public void Deploy()
+        {
+            copyDirectory();
+            Zip();
+            upload();
+            remove();
+            MessageBox.Show("Successful Deployment");
         }
         
     } }

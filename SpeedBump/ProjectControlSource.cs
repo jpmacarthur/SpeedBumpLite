@@ -14,6 +14,7 @@ namespace SpeedBump
         public string FTPPath { get; set; }
         public string StageDir { get; set; }
         public string BaseDir { get; set; }
+        public string RemoteStagingDir { get; set; }
     }
     public class ProjectControlSource : PersistableJson
     {

@@ -26,7 +26,7 @@
                 <ComboBoxItem>Deploy</ComboBoxItem>
             </ComboBox>
             <Button Content="Run" Name="run_BT" VerticalAlignment="Center" Width="60" Margin="0,0,10,0" Click="run_BT_Click"></Button>
-            <Button Content="Run All" Name="runAll_BT" VerticalAlignment="Center" Width="60"></Button>
+            <Button Content="Run All" Name="runAll_BT" VerticalAlignment="Center" Width="60" Click="runAll_BT_Click"></Button>
         </StackPanel>
     </Grid>
 </UserControl>

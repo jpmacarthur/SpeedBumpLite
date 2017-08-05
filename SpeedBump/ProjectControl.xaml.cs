@@ -58,36 +58,59 @@ namespace SpeedBump
         private void run_BT_Click(object sender, RoutedEventArgs e)
         {
             log.Debug("[User Action] " + sender.ToString());
-            DeploymentManager bumper = new DeploymentManager(source);
-
-            string actionChoice = (actionDropdown.SelectedItem as ComboBoxItem).Content.ToString();
+            DeploymentManager bumper = new DeploymentManager(source, item);
+            string actionChoice = "";
+            if ((actionDropdown.SelectedItem as ComboBoxItem).Content != null)
+            {
+                 actionChoice = (actionDropdown.SelectedItem as ComboBoxItem).Content.ToString();
+            }
             switch (actionChoice)
             {
                 case "Prepare":
+                    bumper.Prepare();
                     break;
                 case "Clean":
+                    bumper.Clean();
                     break;
                 case "Bump":
                     string bumpChoice = "unknown";
                     if(majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
-                    if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
-                    if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
-                    Versioning.Version temp = bumper.Bump(item, source, bumpChoice);
-                    versionLabel.Content = temp.getVersion();
+                    else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
+                    else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
+                    Versioning.Version temp = bumper.Bump(bumpChoice);
+                    Version = temp.getVersion();
                     Timestamp = DateTime.UtcNow;
-                    versionLabel.ToolTip = Timestamp;
+                    item.Timestamp = Timestamp;
                     source.Save();
-                    //TODO Timestamp binding
                     break;
                 case "Build":
-                    bumper.Build(item);
+                    bumper.Build();
                     break;
                 case "Deploy":
+                    bumper.Deploy();
                     break;
                 default:
                     break;
             }
 
+        }
+
+        private void runAll_BT_Click(object sender, RoutedEventArgs e)
+        {
+            log.Debug("[User Action] " + sender.ToString());
+            string bumpChoice = "";
+            DeploymentManager bumper = new DeploymentManager(source, item);
+            bumper.Prepare();
+            bumper.Clean();
+            if (majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
+            else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
+            else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
+            try
+            {
+                bumper.Build();
+            }
+            catch(Exception ex) { MessageBox.Show(ex.ToString()); }
+            bumper.Deploy();
         }
     }
 }
