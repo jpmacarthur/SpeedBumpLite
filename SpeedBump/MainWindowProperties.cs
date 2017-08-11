@@ -7,34 +7,8 @@ using System.Threading.Tasks;
 
 namespace SpeedBump
 {
-    public partial class ProjectControl : INotifyPropertyChanged
+    public partial class MainWindow : INotifyPropertyChanged
     {
-        private string version;
-        public string Version
-        {
-            get { return this.version; }
-            set
-            {
-                if (this.version != value)
-                {
-                    this.version = value;
-                    this.NotifyPropertyChanged("Version");
-                }
-            }
-        }
-        private DateTime timestamp;
-        public DateTime Timestamp
-        {
-            get { return this.timestamp; }
-            set
-            {
-                if (this.timestamp != value)
-                {
-                    this.timestamp = value;
-                    this.NotifyPropertyChanged("Timestamp");
-                }
-            }
-        }
         private string report;
         public string Report
         {

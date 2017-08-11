@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="50" d:DesignWidth="600">
     <Grid>
-        <StackPanel Orientation="Horizontal" Name="projectRow">
+        <StackPanel Orientation="Horizontal" Name="projectRow" Margin="21,0,-21,0">
             <CheckBox Name="runAll_CB" VerticalAlignment="Center" Margin="5,0,0,0"></CheckBox>
             <Label Name="projectLabel" Content="{Binding ProjectName}" VerticalAlignment="Center" Width="100"></Label>
             <Label Name="versionLabel" ToolTip="{Binding Timestamp}" Content="{Binding Version}" VerticalAlignment="Center" Width="70"></Label>

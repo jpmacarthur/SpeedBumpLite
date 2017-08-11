@@ -15,6 +15,7 @@ using System.ComponentModel;
 using SpeedBump.Versioning;
 using log4net;
 using SpeedBump.Deployment;
+using System.Threading.Tasks;
 
 namespace SpeedBump
 {
@@ -27,9 +28,15 @@ namespace SpeedBump
     {
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private ProjectControlSource source;
-        private ProjectControlSourceItem item;
+        public ProjectControlSource source;
+        public ProjectControlSourceItem item;
         private VersionManager ver = new VersionManager();
+        public delegate void NewReportEventHandler(object sender, NewReportEventArgs args);
+        public event NewReportEventHandler StatusUpdated;
+        public event EventHandler StartTask;
+        public event EventHandler EndTask;
+
+        public Task runAll;
         public ProjectControl()
         {
             InitializeComponent();
@@ -52,12 +59,17 @@ namespace SpeedBump
             MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir +@"\" + item.StageDir);
             Versioning.Version itemVersion = ver.getchildVersion(assembly);
             Version = itemVersion.getVersion();
-
         }
 
         private void run_BT_Click(object sender, RoutedEventArgs e)
         {
             log.Debug("[User Action] " + sender.ToString());
+            runAll_BT.IsEnabled = false;
+            run_BT.IsEnabled = false;
+            if (this.StartTask != null)
+            {
+                this.StartTask(this, new EventArgs());
+            }
             DeploymentManager bumper = new DeploymentManager(source, item);
             string actionChoice = "";
             if ((actionDropdown.SelectedItem as ComboBoxItem).Content != null)
@@ -67,27 +79,87 @@ namespace SpeedBump
             switch (actionChoice)
             {
                 case "Prepare":
-                    bumper.Prepare();
+                    Task prepare = Task.Factory.StartNew(() => {
+                        bumper.Prepare();
+                    });
+                    Task prepare_ui = prepare.ContinueWith((antecedent) =>
+                    {
+                        runAll_BT.IsEnabled = true;
+                        run_BT.IsEnabled = true;
+                        if (this.EndTask != null)
+                        {
+                            this.EndTask(this, new EventArgs());
+                        }
+                    },TaskScheduler.FromCurrentSynchronizationContext());
                     break;
                 case "Clean":
-                    bumper.Clean();
+                    Task clean = Task.Factory.StartNew(() => {
+                        bumper.Clean();
+                    });
+                    Task clean_ui = clean.ContinueWith((antecedent) =>
+                    {
+                        runAll_BT.IsEnabled = true;
+                        run_BT.IsEnabled = true;
+                        if (this.EndTask != null)
+                        {
+                            this.EndTask(this, new EventArgs());
+                        }
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
                 case "Bump":
                     string bumpChoice = "unknown";
                     if(majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
                     else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
                     else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
-                    Versioning.Version temp = bumper.Bump(bumpChoice);
-                    Version = temp.getVersion();
-                    Timestamp = DateTime.UtcNow;
-                    item.Timestamp = Timestamp;
-                    source.Save();
+                    Task<Versioning.Version> bump = Task.Factory.StartNew(() => {
+                        return bumper.Bump(bumpChoice);
+                    });
+                    Task bump_ui = bump.ContinueWith((antecedent) =>
+                    {
+                        Version = antecedent.Result.getVersion();
+                        Timestamp = DateTime.UtcNow;
+                        item.Timestamp = Timestamp;
+                        source.Save();
+                        runAll_BT.IsEnabled = true;
+                        run_BT.IsEnabled = true;
+                        if (this.EndTask != null)
+                        {
+                            this.EndTask(this, new EventArgs());
+                        }
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
                 case "Build":
-                    bumper.Build();
+                    Task build = Task.Factory.StartNew(() => {
+                        Report = bumper.Build();
+
+                    });
+                    Task build_ui = build.ContinueWith((antecedent) =>
+                    {
+                        if (this.StatusUpdated != null)
+                        {
+                            this.StatusUpdated(this, new NewReportEventArgs(Report, projectLabel.Content.ToString()));
+                        }
+                        if (this.EndTask != null)
+                        {
+                            this.EndTask(this, new EventArgs());
+                        }
+                        runAll_BT.IsEnabled = true;
+                        run_BT.IsEnabled = true;
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
                 case "Deploy":
-                    bumper.Deploy();
+                    Task deploy = Task.Factory.StartNew(() => {
+                        bumper.Deploy();
+                    });
+                    Task deploy_ui = deploy.ContinueWith((antecedent) =>
+                    {
+                        if (this.EndTask != null)
+                        {
+                            this.EndTask(this, new EventArgs());
+                        }
+                        runAll_BT.IsEnabled = true;
+                        run_BT.IsEnabled = true;
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
                 default:
                     break;
@@ -97,20 +169,43 @@ namespace SpeedBump
 
         private void runAll_BT_Click(object sender, RoutedEventArgs e)
         {
-            log.Debug("[User Action] " + sender.ToString());
+            runAll_BT.IsEnabled = false;
+            run_BT.IsEnabled = false;
             string bumpChoice = "";
-            DeploymentManager bumper = new DeploymentManager(source, item);
-            bumper.Prepare();
-            bumper.Clean();
+            string pjContent = projectLabel.Content.ToString();
             if (majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
             else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
             else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
-            try
+            Task runAll = Task.Factory.StartNew(() =>
             {
-                bumper.Build();
-            }
-            catch(Exception ex) { MessageBox.Show(ex.ToString()); }
-            bumper.Deploy();
+                log.Debug("[User Action] " + sender.ToString());
+                DeploymentManager bumper = new DeploymentManager(source, item);
+                bumper.Prepare();
+                bumper.Clean();
+                Versioning.Version temp = bumper.Bump(bumpChoice);
+                Version = temp.getVersion();
+                Timestamp = DateTime.UtcNow;
+                item.Timestamp = Timestamp;
+                try
+                {
+                    Report = bumper.Build();
+                  /*  if (this.StatusUpdated != null)
+                    {
+                        this.StatusUpdated(this, new NewReportEventArgs(Report, pjContent));
+                    }*/
+                }
+                catch (Exception ex) { MessageBox.Show(ex.ToString()); }
+                bumper.Deploy();
+            });
+            Task runAll_cont = runAll.ContinueWith((antecedent) =>
+            {
+                runAll_BT.IsEnabled = true;
+                run_BT.IsEnabled = true;
+                if (this.StatusUpdated != null)
+                {
+                    this.StatusUpdated(this, new NewReportEventArgs(Report, pjContent));
+                }
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
     }
 }

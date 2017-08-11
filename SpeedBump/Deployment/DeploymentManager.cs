@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Windows;
+using System.Threading;
 
 namespace SpeedBump.Deployment
 {
@@ -111,7 +112,7 @@ namespace SpeedBump.Deployment
 
             return buffer.ToString();
         }
-        public void Build()
+        public string Build()
         {
             log.Debug("[User Action] Build");
             string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
@@ -120,7 +121,7 @@ namespace SpeedBump.Deployment
             log.Debug("command="+command);
             log.Debug("arguments=" + arguments);
             string result = run(command, arguments);
-            if(result.Contains("Build FAILED") || result.Contains("MSBUILD : error"))
+           /* if(result.Contains("Build FAILED") || result.Contains("MSBUILD : error"))
             {
                 throw new Exception("Build Failed");
             }
@@ -128,8 +129,9 @@ namespace SpeedBump.Deployment
             if (warningCheck.IsMatch(result))
             {
                 throw new Exception("Warning: Check Log");
-            }
+            }*/
             log.Debug(result);
+            return result;
         }
         public void Clean()
         {
@@ -194,12 +196,15 @@ namespace SpeedBump.Deployment
             Versioning.Version itemVersion = ver.getchildVersion(assembly);
             string remoteStagingDir = item.RemoteStagingDir; // get this from the algo control properties; you may have to create a new entry
             string zipFilename = itemVersion.getVersion() + ".zip";
-            using (WebClient client = new WebClient())
+            try
             {
-                client.Credentials = new NetworkCredential("staging@finbittech.com", "weakPa$$word100");
-                client.UploadFile("ftp://finbittech.com/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
-                client.Dispose();
-            }
+                using (WebClient client = new WebClient())
+                {
+                    client.Credentials = new NetworkCredential("staging@finbittech.com", "weakPa$$word100");
+                    client.UploadFile("ftp://finbittech.com/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
+                    client.Dispose();
+                }
+            }catch(Exception ex) { MessageBox.Show(ex.ToString()); }
         }
         private void remove()
         {
@@ -214,7 +219,6 @@ namespace SpeedBump.Deployment
             Zip();
             upload();
             remove();
-            MessageBox.Show("Successful Deployment");
         }
         
     } }

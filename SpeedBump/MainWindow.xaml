@@ -5,10 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SpeedBump"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="625">
+        Title="MainWindow" Height="350" Width="625"
+        Icon="icon_fxO_icon.ico">
     <Grid>
-        <DockPanel>
-            <StackPanel Margin="0,0,0,5" DockPanel.Dock="Top" Orientation="Horizontal" Height="30" VerticalAlignment="Top"  HorizontalAlignment="Center" Name="topBar">
+        <DockPanel Name="overall">
+            <StackPanel Panel.ZIndex="2" Margin="0,0,0,5" DockPanel.Dock="Top" Orientation="Horizontal" Height="30" VerticalAlignment="Top"  HorizontalAlignment="Center" Name="topBar">
                 <Label Content="Remote FTP" Name="remoteFTP_label"></Label>
                 <ComboBox Name="ftp_Combobox" Width="100">
                 </ComboBox>
@@ -17,5 +18,6 @@
             </StackPanel>
             <StackPanel Orientation="Vertical" Name="projectRowsPanel"></StackPanel>
         </DockPanel>
+        <local:Warning x:Name="status_BT"></local:Warning>
     </Grid>
 </Window>

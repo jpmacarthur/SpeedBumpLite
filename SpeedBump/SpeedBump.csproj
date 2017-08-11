@@ -56,6 +56,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icon_fxO_icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net">
       <HintPath>..\..\..\Lib\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
@@ -85,6 +88,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="NewReportEventArgs.cs" />
+    <Compile Include="StatusUpdating\StatusCheck.cs" />
+    <Compile Include="StatusUpdating\StatusProperties.cs" />
+    <Compile Include="StatusUpdating\StatusUpdater.cs" />
+    <Compile Include="Warning.xaml.cs">
+      <DependentUpon>Warning.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -93,7 +103,11 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DeploymentManager.cs" />
+    <Compile Include="Deployment\DeploymentManager.cs" />
+    <Compile Include="MainWindowProperties.cs" />
+    <Compile Include="ReportingWindow.xaml.cs">
+      <DependentUpon>ReportingWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Versioning\myJSON.cs" />
     <Compile Include="Versioning\Version.cs" />
     <Compile Include="Versioning\VersionManager.cs" />
@@ -102,6 +116,14 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="ProjectControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ReportingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Warning.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -143,7 +165,24 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Deployment\" />
+    <Resource Include="Images\Neutral Circle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Error Circle.png" />
+    <Resource Include="Images\Good Circle.png" />
+    <Resource Include="Images\Warning Circle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\All Circle.png" />
+    <Resource Include="Images\Success Error.png" />
+    <Resource Include="Images\Success Warning.png" />
+    <Resource Include="Images\Warning Error.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icon_fxO_icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
