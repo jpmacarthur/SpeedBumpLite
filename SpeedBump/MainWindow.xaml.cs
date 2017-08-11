@@ -191,19 +191,29 @@ namespace SpeedBump
                     }, TaskScheduler.FromCurrentSynchronizationContext()); 
                      TaskList.Add(runAll_cont);
                 } }
-
-                    Task.Factory.ContinueWhenAll(TaskList.ToArray(), (antecedent) =>
+            if (TaskList.Count > 0)
+            {
+                Task.Factory.ContinueWhenAll(TaskList.ToArray(), (antecedent) =>
+                {
+                    Task.WaitAll(TaskList.ToArray());
+                    StatusCheck check = new StatusCheck(reportsHolder);
+                    updateStatus(check);
+                    foreach (ProjectControl child in projectRowsPanel.Children)
                     {
-                        Task.WaitAll(TaskList.ToArray());
-                        StatusCheck check = new StatusCheck(reportsHolder);
-                        updateStatus(check);
-                        foreach (ProjectControl child in projectRowsPanel.Children)
-                        {
-                            child.runAll_BT.IsEnabled = true;
-                            child.run_BT.IsEnabled = true;
-                        }
-                    }, new System.Threading.CancellationToken(), TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
+                        child.runAll_BT.IsEnabled = true;
+                        child.run_BT.IsEnabled = true;
+                    }
+                }, new System.Threading.CancellationToken(), TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
+            }
+            else
+            {
+                foreach (ProjectControl child in projectRowsPanel.Children)
+                {
+                    child.runAll_BT.IsEnabled = true;
+                    child.run_BT.IsEnabled = true;
                 }
             }
-        }
+         }
+     }
+ }
 
