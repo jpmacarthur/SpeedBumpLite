@@ -26,12 +26,12 @@ namespace SpeedBump.Deployment
 
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private VersionManager ver = new VersionManager();
-        private ProjectControlSource source = new ProjectControlSource();
-        private ProjectControlSourceItem item = new ProjectControlSourceItem();
+        private ProjectControlSource source;
+        private ProjectControlSourceItem item;
 
         public Versioning.Version Bump(string choice)
         {
-            VersionManager ver = new VersionManager();
+
             Versioning.Version newVersion = new Versioning.Version();
             string projectPath = source.BaseDir + item.BaseDir + @"\";
             Versioning.Version itemVersion = ver.GetVersion(projectPath + item.StageDir);
@@ -190,7 +190,7 @@ namespace SpeedBump.Deployment
             string path = source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\copy\";
             ZipFile.CreateFromDirectory(path, source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + itemVersion.getVersion() + ".zip"); 
         }
-        private void upload()
+        private void upload(string path)
         {
             MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir + @"\" + item.StageDir);
             Versioning.Version itemVersion = ver.getchildVersion(assembly);
@@ -201,10 +201,9 @@ namespace SpeedBump.Deployment
                 using (WebClient client = new WebClient())
                 {
                     client.Credentials = new NetworkCredential("staging@finbittech.com", "weakPa$$word100");
-                    client.UploadFile("ftp://finbittech.com/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
-                    client.Dispose();
+                    client.UploadFile(path + "/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
                 }
-            }catch(Exception ex) { MessageBox.Show(ex.ToString()); }
+            }catch(Exception) { throw; }
         }
         private void remove()
         {
