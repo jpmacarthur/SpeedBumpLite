@@ -190,18 +190,24 @@ namespace SpeedBump.Deployment
             string path = source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\copy\";
             ZipFile.CreateFromDirectory(path, source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + itemVersion.getVersion() + ".zip"); 
         }
-        private void upload(string path)
+        private void upload(string address)
         {
             MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir + @"\" + item.StageDir);
             Versioning.Version itemVersion = ver.getchildVersion(assembly);
             string remoteStagingDir = item.RemoteStagingDir; // get this from the algo control properties; you may have to create a new entry
             string zipFilename = itemVersion.getVersion() + ".zip";
+            var password = source.FTPHosts.Where(f => f.IPAddress == address)
+                .Select(p => p.Password)
+                .First();
+            var username = source.FTPHosts.Where(f => f.IPAddress == address)
+                .Select(u => u.Username)
+                .First();
             try
             {
                 using (WebClient client = new WebClient())
                 {
-                    client.Credentials = new NetworkCredential("staging@finbittech.com", "weakPa$$word100");
-                    client.UploadFile(path + "/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
+                    client.Credentials = new NetworkCredential(username, password);
+                    client.UploadFile(@"ftp://" + address + "/" + remoteStagingDir + "/" + zipFilename, "STOR", source.BaseDir + item.BaseDir + "\\" + item.StageDir + @"\bin\x64\" + zipFilename);
                 }
             }catch(Exception) { throw; }
         }
@@ -212,11 +218,11 @@ namespace SpeedBump.Deployment
             Directory.Delete(source.BaseDir + item.BaseDir + "\\" + item.StageDir + "\\" + @"bin\x64\copy", true);
             File.Delete(source.BaseDir + item.BaseDir + "\\" + item.StageDir + "\\" + @"bin\x64\" + itemVersion.getVersion() + ".zip");       
         }
-        public void Deploy()
+        public void Deploy(string address)
         {
             copyDirectory();
             Zip();
-            upload();
+            upload(address);
             remove();
         }
         

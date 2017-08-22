@@ -20,7 +20,7 @@ namespace SpeedBump
     {
         public string BaseDir { get; set; }
         public List<ProjectControlSourceItem> Items {get; set;}
-        public List<String> FTPHosts { get; set; }
+        public List<FTPHost> FTPHosts { get; set; }
         public string CompileDir { get; set; }
     }
 
@@ -45,9 +45,9 @@ namespace SpeedBump
             source.Items.Add(itemFive);
             source.Items.Add(itemSix);
             source.BaseDir = @"c:\dev\projects\";
-            source.FTPHosts = new List<string>();
-            source.FTPHosts.Add("10.10.100.223");
-            source.FTPHosts.Add("10.10.100.35");
+            source.FTPHosts = new List<FTPHost>();
+          //  source.FTPHosts.Add(new FTPHost {IPAddress= });
+           // source.FTPHosts.Add("10.10.100.35");
             source.Save();
             
 

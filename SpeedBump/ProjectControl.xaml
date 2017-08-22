@@ -5,9 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SpeedBump"
              mc:Ignorable="d" 
-             d:DesignHeight="50" d:DesignWidth="600">
+             d:DesignHeight="50" d:DesignWidth="750">
     <Grid>
-        <StackPanel Orientation="Horizontal" Name="projectRow" Margin="21,0,-21,0">
+        <StackPanel Orientation="Horizontal" Name="projectRow" >
+            <StackPanel Orientation="Horizontal" Name="innerPR" Margin="21,0,10,0">
             <CheckBox Name="runAll_CB" VerticalAlignment="Center" Margin="5,0,0,0"></CheckBox>
             <Label Name="projectLabel" Content="{Binding ProjectName}" VerticalAlignment="Center" Width="100"></Label>
             <Label Name="versionLabel" ToolTip="{Binding Timestamp}" Content="{Binding Version}" VerticalAlignment="Center" Width="70"></Label>
@@ -25,8 +26,11 @@
                 <ComboBoxItem>Build</ComboBoxItem>
                 <ComboBoxItem>Deploy</ComboBoxItem>
             </ComboBox>
+            <Button Content="Rebuild" Name="RebuiltButton" VerticalAlignment="Center" Width="60" Margin="0,0,10,0" Click="RebuiltButton_Click"></Button>
             <Button Content="Run" Name="run_BT" VerticalAlignment="Center" Width="60" Margin="0,0,10,0" Click="run_BT_Click"></Button>
             <Button Content="Run All" Name="runAll_BT" VerticalAlignment="Center" Width="60" Click="runAll_BT_Click"></Button>
+            </StackPanel>
+            <local:Warning Margin="0,0,0,0" x:Name="WarningStatus" VerticalAlignment="Center"></local:Warning>
         </StackPanel>
     </Grid>
 </UserControl>

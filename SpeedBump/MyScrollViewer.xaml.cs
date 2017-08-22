@@ -16,29 +16,24 @@ using System.Windows.Shapes;
 namespace SpeedBump
 {
     /// <summary>
-    /// Interaction logic for Warning.xaml
+    /// Interaction logic for MyScrollViewer.xaml
     /// </summary>
-    public partial class Warning : UserControl
+    public partial class MyScrollViewer : UserControl
     {
-        public Warning()
+        public event EventHandler ReportViewerToggle;
+        public MyScrollViewer()
         {
             InitializeComponent();
-            DataContext = this;
-            var yourImage = new BitmapImage(new Uri("Images\\gray-circle.png", UriKind.Relative));
-            status = yourImage;
+            scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+            scroll.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            onButtonClicked(e);
-        }
-        public event EventHandler ButtonClicked;
-        protected virtual void onButtonClicked(EventArgs e)
-        {
-            var handler = ButtonClicked;
-            if(handler != null)
+            this.Visibility = Visibility.Collapsed;
+            if (this.ReportViewerToggle != null)
             {
-                handler(this, e);
+                this.ReportViewerToggle(this, new EventArgs());
             }
         }
     }

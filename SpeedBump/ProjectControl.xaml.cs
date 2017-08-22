@@ -16,6 +16,8 @@ using SpeedBump.Versioning;
 using log4net;
 using SpeedBump.Deployment;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using LCP.Common.UI;
 
 namespace SpeedBump
 {
@@ -33,14 +35,50 @@ namespace SpeedBump
         private VersionManager ver = new VersionManager();
         public delegate void NewReportEventHandler(object sender, NewReportEventArgs args);
         public event NewReportEventHandler StatusUpdated;
+        bool reportsToggle = true;
         public event EventHandler StartTask;
         public event EventHandler EndTask;
+        public event NewReportEventHandler SendReportButtonClick;
 
         public Task runAll;
         public ProjectControl()
         {
             InitializeComponent();
             DataContext = this;
+            WarningStatus.Status = new BitmapImage(new Uri("Images\\gray-circle.png",UriKind.Relative));
+            this.WarningStatus.reports_BT.Click += Reports_BT_Click;
+        }
+
+        public void DisableUI()
+        {
+            runAll_BT.IsEnabled = false;
+            run_BT.IsEnabled = false;
+            RebuiltButton.IsEnabled = false;
+            WarningStatus.Status = new BitmapImage(new Uri("Images\\yellow-circle.png", UriKind.Relative));
+            if (this.StartTask != null)
+            {
+                this.StartTask(this, new EventArgs());
+            }
+        }
+        public void EnableUI()
+        {
+            if (this.EndTask != null)
+            {
+                this.EndTask(this, new EventArgs());
+            }
+            runAll_BT.IsEnabled = true;
+            run_BT.IsEnabled = true;
+            RebuiltButton.IsEnabled = true;
+        }
+        private void Reports_BT_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (this.SendReportButtonClick != null)
+            {
+                this.SendReportButtonClick(this, new NewReportEventArgs(Report));
+            }
+
+
         }
 
         public void Reload(ProjectControlSourceItem item, ProjectControlSource source)
@@ -63,12 +101,16 @@ namespace SpeedBump
 
         private void run_BT_Click(object sender, RoutedEventArgs e)
         {
+            MainWindow parentwin = Application.Current.MainWindow as MainWindow;
             log.Debug("[User Action] " + sender.ToString());
-            runAll_BT.IsEnabled = false;
-            run_BT.IsEnabled = false;
-            if (this.StartTask != null)
+            DisableUI();
+            List<string> checkedboxes = new List<string>();
+            foreach (CheckBox cb in parentwin.ServerChoices.Children)
             {
-                this.StartTask(this, new EventArgs());
+                if (cb.IsChecked == true)
+                {
+                    checkedboxes.Add(cb.Content.ToString());
+                }
             }
             DeploymentManager bumper = new DeploymentManager(source, item);
             string actionChoice = "";
@@ -76,37 +118,47 @@ namespace SpeedBump
             {
                  actionChoice = (actionDropdown.SelectedItem as ComboBoxItem).Content.ToString();
             }
+
             switch (actionChoice)
             {
+
                 case "Prepare":
+                    DisableUI();
+                    bool success = true;
+
                     Task prepare = Task.Factory.StartNew(() => {
-                        bumper.Prepare();
+                        try
+                        {
+                            bumper.Prepare();
+                        }
+                        catch (Exception) { success = false; }
                     });
                     Task prepare_ui = prepare.ContinueWith((antecedent) =>
                     {
-                        runAll_BT.IsEnabled = true;
-                        run_BT.IsEnabled = true;
-                        if (this.EndTask != null)
-                        {
-                            this.EndTask(this, new EventArgs());
-                        }
+                        setStatus(success);
+                        EnableUI();
                     },TaskScheduler.FromCurrentSynchronizationContext());
                     break;
+
                 case "Clean":
+                    success = true;
                     Task clean = Task.Factory.StartNew(() => {
-                        bumper.Clean();
+                        try
+                        {
+                            bumper.Clean();
+                        }
+                        catch (Exception) { success = false; }
                     });
                     Task clean_ui = clean.ContinueWith((antecedent) =>
                     {
-                        runAll_BT.IsEnabled = true;
-                        run_BT.IsEnabled = true;
-                        if (this.EndTask != null)
-                        {
-                            this.EndTask(this, new EventArgs());
-                        }
+                        EnableUI();
+                        setStatus(success);
                     }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
+
                 case "Bump":
+                    DisableUI();
+                    success = true;
                     string bumpChoice = "unknown";
                     if(majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
                     else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
@@ -120,17 +172,15 @@ namespace SpeedBump
                         Timestamp = DateTime.UtcNow;
                         item.Timestamp = Timestamp;
                         source.Save();
-                        runAll_BT.IsEnabled = true;
-                        run_BT.IsEnabled = true;
-                        if (this.EndTask != null)
-                        {
-                            this.EndTask(this, new EventArgs());
-                        }
+                        EnableUI();
+                        setStatus(true);
                     }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
+
                 case "Build":
+                    DisableUI();
                     Task build = Task.Factory.StartNew(() => {
-                        Report = bumper.Build();
+                            Report = bumper.Build();
 
                     });
                     Task build_ui = build.ContinueWith((antecedent) =>
@@ -139,29 +189,37 @@ namespace SpeedBump
                         {
                             this.StatusUpdated(this, new NewReportEventArgs(Report, projectLabel.Content.ToString()));
                         }
-                        if (this.EndTask != null)
-                        {
-                            this.EndTask(this, new EventArgs());
-                        }
-                        runAll_BT.IsEnabled = true;
-                        run_BT.IsEnabled = true;
+                        updateStatus(Report);
+                        EnableUI();
                     }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
+
                 case "Deploy":
+                    DisableUI();
+                    success = true;
                     Task deploy = Task.Factory.StartNew(() => {
-                        bumper.Deploy();
+                    try
+                    {
+                        foreach (string address in checkedboxes)
+                        {
+                            bumper.Deploy(address);
+                        }
+
+                    }
+                    catch (Exception ex)
+                        {
+                        MessageBox.Show(ex.ToString());
+                            success = false;
+                        }
                     });
                     Task deploy_ui = deploy.ContinueWith((antecedent) =>
                     {
-                        if (this.EndTask != null)
-                        {
-                            this.EndTask(this, new EventArgs());
-                        }
-                        runAll_BT.IsEnabled = true;
-                        run_BT.IsEnabled = true;
+                        setStatus(success);
+                        EnableUI();
                     }, TaskScheduler.FromCurrentSynchronizationContext());
                     break;
                 default:
+                    EnableUI();
                     break;
             }
 
@@ -169,10 +227,19 @@ namespace SpeedBump
 
         private void runAll_BT_Click(object sender, RoutedEventArgs e)
         {
-            runAll_BT.IsEnabled = false;
-            run_BT.IsEnabled = false;
+            MainWindow parentwin = Application.Current.MainWindow as MainWindow;
+            DisableUI();
             string bumpChoice = "";
+            bool success = true;
             string pjContent = projectLabel.Content.ToString();
+            List<string> checkedboxes = new List<string>();
+            foreach (CheckBox cb in parentwin.ServerChoices.Children)
+            {
+                if (cb.IsChecked == true)
+                {
+                    checkedboxes.Add(cb.Content.ToString());
+                }
+            }
             if (majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
             else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
             else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
@@ -189,23 +256,89 @@ namespace SpeedBump
                 try
                 {
                     Report = bumper.Build();
-                  /*  if (this.StatusUpdated != null)
+                    if (Report.Contains("Build FAILED") || Report.Contains("MSBUILD : error"))
                     {
-                        this.StatusUpdated(this, new NewReportEventArgs(Report, pjContent));
-                    }*/
+                        success = false;
+                    }
+                    /*  if (this.StatusUpdated != null)
+                      {
+                          this.StatusUpdated(this, new NewReportEventArgs(Report, pjContent));
+                      }*/
                 }
-                catch (Exception ex) { MessageBox.Show(ex.ToString()); }
-                bumper.Deploy();
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                    success = false;
+                }
+                if (success == true)
+                {
+                    try
+                    {
+                        foreach (string address in checkedboxes)
+                        {
+                            bumper.Deploy(address);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                        success = false;
+                    }
+                }
             });
             Task runAll_cont = runAll.ContinueWith((antecedent) =>
             {
-                runAll_BT.IsEnabled = true;
-                run_BT.IsEnabled = true;
-                if (this.StatusUpdated != null)
+                EnableUI();
+                setStatus(success);
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private void RebuiltButton_Click(object sender, RoutedEventArgs e)
+        {
+            log.Debug("[User Action] " + sender.ToString());
+            DeploymentManager bumper = new DeploymentManager(source, item);
+
+            DisableUI();
+            WarningStatus.Status = new BitmapImage(new Uri("Images\\yellow-circle.png",UriKind.Relative));
+            Task rebuild = Task.Factory.StartNew(() => {
+                bumper.Clean();
+                try { Report = bumper.Build(); }
+                catch(Exception ex) { MessageBox.Show(ex.ToString()); }
+            });
+            Task rebuild_ui = rebuild.ContinueWith((antecedent) =>
+            {
+                EnableUI();
+                string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
+                Regex warningCheck = new Regex(pattern);
+                if (Report.Contains("Build FAILED") || Report.Contains("MSBUILD : error"))
                 {
-                    this.StatusUpdated(this, new NewReportEventArgs(Report, pjContent));
+                    WarningStatus.Status = new BitmapImage(new Uri("Images\\red-circle.png", UriKind.Relative));
+                    WarningStatus.Status.Freeze();
+                }
+                else if (warningCheck.IsMatch(Report))
+                {
+                    WarningStatus.Status = new BitmapImage(new Uri("Images\\red-circle.png", UriKind.Relative));
+                    WarningStatus.Status.Freeze();
+                }
+                else if (Report.Contains("Build succeeded"))
+                {
+                    WarningStatus.Status = new BitmapImage(new Uri("Images\\green-circle.png", UriKind.Relative));
+                    WarningStatus.Status.Freeze();
                 }
             }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+        public void setStatus(bool passed)
+        {
+            if(passed == true)
+            {
+                WarningStatus.Status = new BitmapImage(new Uri("Images\\green-circle.png", UriKind.Relative));
+                WarningStatus.Status.Freeze();
+            }
+            else
+            {
+                WarningStatus.Status = new BitmapImage(new Uri("Images\\red-circle.png", UriKind.Relative));
+                WarningStatus.Status.Freeze();
+            }
         }
     }
 }
