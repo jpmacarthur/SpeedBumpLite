@@ -140,24 +140,27 @@ namespace SpeedBump.Deployment
             string[] childpaths = Directory.GetDirectories(projectPath);
             if (Directory.Exists(projectPath + @"\.vs\"))
             {
-                Directory.Delete(projectPath + @"\.vs\", true);
+                DeleteDirectory(projectPath + @"\.vs\");
             }
             if (Directory.Exists(projectPath + @"\TestResults\"))
             {
-                Directory.Delete(projectPath + @"\TestResults\", true);
+                DeleteDirectory(projectPath + @"\TestResults\");
             }
-
-            foreach (string child in childpaths)
+            try
             {
-                if (Directory.Exists(child + "\\bin"))
+                foreach (string child in childpaths)
                 {
-                    Directory.Delete(child + "\\bin\\", recursive: true);
-                }
-                if (Directory.Exists(child + "\\obj"))
-                {
-                    Directory.Delete(child + @"\obj\", recursive: true);
+                    if (Directory.Exists(child + "\\bin"))
+                    {
+                        DeleteDirectory(child + "\\bin\\");
+                    }
+                    if (Directory.Exists(child + "\\obj"))
+                    {
+                        DeleteDirectory(child + @"\obj\");
+                    }
                 }
             }
+            catch (Exception) { throw; }
         }
         public void Prepare()
         {
@@ -224,6 +227,26 @@ namespace SpeedBump.Deployment
             Zip();
             upload(address);
             remove();
+        }
+        private void DeleteDirectory(string path)
+        {
+            string[] dirs = Directory.GetDirectories(path);
+            if(dirs.Count() != 0)
+            {
+                foreach(string dir in dirs)
+                {
+                    DeleteDirectory(dir);
+                }
+            }
+            string[] files = Directory.GetFiles(path);
+            if(files.Count() != 0)
+            {
+                foreach(string file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+            Directory.Delete(path);
         }
         
     } }

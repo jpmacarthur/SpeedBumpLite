@@ -301,7 +301,8 @@ namespace SpeedBump
             DisableUI();
             WarningStatus.Status = new BitmapImage(new Uri("Images\\yellow-circle.png",UriKind.Relative));
             Task rebuild = Task.Factory.StartNew(() => {
-                bumper.Clean();
+                try { bumper.Clean(); }
+                catch(Exception ex) { MessageBox.Show(ex.ToString()); }
                 try { Report = bumper.Build(); }
                 catch(Exception ex) { MessageBox.Show(ex.ToString()); }
             });
@@ -310,7 +311,12 @@ namespace SpeedBump
                 EnableUI();
                 string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
                 Regex warningCheck = new Regex(pattern);
-                if (Report.Contains("Build FAILED") || Report.Contains("MSBUILD : error"))
+                if(Report == null)
+                {
+                    WarningStatus.Status = new BitmapImage(new Uri("Images\\red-circle.png", UriKind.Relative));
+                    WarningStatus.Status.Freeze();
+                }
+                else if (Report.Contains("Build FAILED") || Report.Contains("MSBUILD : error"))
                 {
                     WarningStatus.Status = new BitmapImage(new Uri("Images\\red-circle.png", UriKind.Relative));
                     WarningStatus.Status.Freeze();

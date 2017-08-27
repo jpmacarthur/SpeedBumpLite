@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedBump", "SpeedBump\Spee
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\..\..\Documents\Visual Studio 2017\Projects\Common\Common\Common.csproj", "{93B99F2A-4455-4BB1-AC03-19D262225964}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedBumpTest", "SpeedBumpTest\SpeedBumpTest.csproj", "{90344ED9-8B34-473B-B185-020B0561C554}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,14 @@ Global
 		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|Any CPU.Build.0 = Release|Any CPU
 		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|x64.ActiveCfg = Release|x64
 		{93B99F2A-4455-4BB1-AC03-19D262225964}.Release|x64.Build.0 = Release|x64
+		{90344ED9-8B34-473B-B185-020B0561C554}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Debug|x64.Build.0 = Debug|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Release|x64.ActiveCfg = Release|Any CPU
+		{90344ED9-8B34-473B-B185-020B0561C554}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
