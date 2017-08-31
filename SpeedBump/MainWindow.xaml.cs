@@ -149,6 +149,10 @@ namespace SpeedBump
                 }
                 ServerChoices.Children.Add(ftpcheck);
             }
+            if(checkcount < 1) { foreach(ProjectControl pc in projectRowsPanel.Children)
+                {
+                    pc.DeployButton.IsEnabled = false;
+                } }
         }
 
         private void Ftpcheck_Unchecked(object sender, RoutedEventArgs e)

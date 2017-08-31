@@ -18,6 +18,7 @@ using SpeedBump.Deployment;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using LCP.Common.UI;
+using System.Threading;
 
 namespace SpeedBump
 {
@@ -40,6 +41,9 @@ namespace SpeedBump
         public event EventHandler EndTask;
         public event NewReportEventHandler SendReportButtonClick;
         DeploymentManager bumper;
+        int taskcount = 0;
+        CancellationTokenSource cancelsource = new CancellationTokenSource();
+        CancellationToken canceltoken;
 
         public Task runAll;
         public ProjectControl()
@@ -333,10 +337,12 @@ namespace SpeedBump
         }
         public void setStatus(bool passed)
         {
+            var tokensource = new CancellationTokenSource();
             if(passed == true)
             {
                 WarningStatus.Status = new BitmapImage(new Uri("Images\\green-circle.png", UriKind.Relative));
                 WarningStatus.Status.Freeze();
+
             }
             else
             {
@@ -376,13 +382,22 @@ namespace SpeedBump
         private void BuildButton_Click(object sender, RoutedEventArgs e)
         {
             bool success = true;
+            if (taskcount > 0)
+            {
+                cancelsource.Cancel();
+                taskcount = 0;
+            }
+            cancelsource = new CancellationTokenSource();
+            canceltoken = cancelsource.Token;
             DeploymentManager bumper = new DeploymentManager(source, item);
             DisableUI();
             string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
             Regex warningCheck = new Regex(pattern);
-            Task build = Task.Factory.StartNew(() => {
+            Task build = Task.Factory.StartNew(() =>
+            {
                 try
                 {
+                    taskcount++;
                     bumper.Prepare();
                     bumper.Clean();
                     string temp = bumper.Build();
@@ -418,6 +433,25 @@ namespace SpeedBump
                 setStatus(success);
 
             }, TaskScheduler.FromCurrentSynchronizationContext());
+         
+                Task<int> waiting = clean_ui.ContinueWith((antecedent) =>
+                {
+                    if (success)
+                    {
+                        Thread.Sleep(5000);
+                    }
+                        return 1;
+                }, TaskScheduler.Default);
+                Task waitingcontinue = waiting.ContinueWith((antecedent) =>
+                {
+                    if (success)
+                    {
+                        if (canceltoken.IsCancellationRequested) { return; }
+                        WarningStatus.Status = new BitmapImage(new Uri("Images\\gray-circle.png", UriKind.Relative));
+                        WarningStatus.Status.Freeze();
+                    }
+                    taskcount--;
+                }, canceltoken, TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void BumpButton_Click(object sender, RoutedEventArgs e)
@@ -442,8 +476,24 @@ namespace SpeedBump
                     EnableUI();
                     setStatus(true);
                 }, TaskScheduler.FromCurrentSynchronizationContext());
+                if (success)
+                {
+                    Task<int> waiting = bump_ui.ContinueWith((antecedent) =>
+                    {
+                        Thread.Sleep(5000);
+                        return 1;
+                    }, TaskScheduler.Default);
+                    Task waitingcontinue = waiting.ContinueWith((antecedent) =>
+                    {
+                        if (canceltoken.IsCancellationRequested) { return; }
+                        WarningStatus.Status = new BitmapImage(new Uri("Images\\gray-circle.png", UriKind.Relative));
+                        WarningStatus.Status.Freeze();
+                        taskcount--;
+                    }, canceltoken, TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
+                }
             }
-            catch (AggregateException ex) {
+            catch (AggregateException ex)
+            {
                 success = false;
                 if (this.StatusUpdated != null)
                 {
@@ -493,6 +543,17 @@ namespace SpeedBump
                 setStatus(success);
                 EnableUI();
             }, TaskScheduler.FromCurrentSynchronizationContext());
+            Task<int> waiting = deploy_ui.ContinueWith((antecedent) => {
+                Thread.Sleep(5000);
+                return 1;
+            }, TaskScheduler.Default);
+            Task waitingcontinue = waiting.ContinueWith((antecedent) =>
+            {
+                if (canceltoken.IsCancellationRequested) { return; }
+                WarningStatus.Status = new BitmapImage(new Uri("Images\\gray-circle.png", UriKind.Relative));
+                WarningStatus.Status.Freeze();
+                taskcount--;
+            }, canceltoken, TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
         }
     }
 }

@@ -9,21 +9,25 @@
         Icon="icon_fxO_icon.ico" Closing="Window_Closing">
     <Grid>
         <local:MyScrollViewer x:Name="sv" Visibility="Collapsed"></local:MyScrollViewer>
-        <StackPanel>
-        <DockPanel Name="overall">
-            <StackPanel Panel.ZIndex="2" Margin="0,0,0,5" DockPanel.Dock="Bottom" Orientation="Horizontal" Height="30" VerticalAlignment="Top"  HorizontalAlignment="Center" Name="topBar">
-                <Label Content="FTP Servers" Name="remoteFTP_label"></Label>
+        <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <DockPanel Name="overall">
+                <StackPanel Panel.ZIndex="2" Margin="0,0,0,5" DockPanel.Dock="Bottom" Orientation="Horizontal" Height="30" VerticalAlignment="Top"  HorizontalAlignment="Center" Name="topBar">
+                    <Label Content="FTP Servers" Name="remoteFTP_label"></Label>
                     <StackPanel Orientation="Horizontal" Name="ServerChoices"></StackPanel>
 
                 </StackPanel>
-            <StackPanel Orientation="Vertical" Name="projectRowsPanel" DockPanel.Dock="Top"></StackPanel>
-        </DockPanel>
+                <StackPanel Orientation="Vertical" Name="projectRowsPanel" DockPanel.Dock="Top"></StackPanel>
+            </DockPanel>
             <Label Content="Errors:" Margin="0,10,0,0"></Label>
-            <Border BorderBrush="Black" BorderThickness="1">
-                <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
-        <TextBlock Text="{Binding Report}" Margin="0,10,0,0"></TextBlock>
-                </ScrollViewer>
-            </Border>
         </StackPanel>
+        <Grid VerticalAlignment="Stretch" DockPanel.Dock="Bottom" Margin="5">
+                <Border BorderBrush="Black" BorderThickness="1">
+            <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" VerticalAlignment="Stretch">
+                <TextBlock Text="{Binding Report}" Margin="0,10,0,0"></TextBlock>
+            </ScrollViewer>
+                </Border>
+            </Grid>
+        </DockPanel>
     </Grid>
 </Window>
