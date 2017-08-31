@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using SpeedBump.Deployment;
 using SpeedBump.Versioning;
 using System.Threading;
+using System.Windows.Controls.Primitives;
 
 namespace SpeedBump
 {
@@ -34,6 +35,8 @@ namespace SpeedBump
         public delegate void StartTaskEventHandler(object sender, EventArgs args);
         public event NewReportEventHandler StatusUpdated;
         public event EventHandler StartTask;
+        ProjectControlSource source;
+        int checkcount;
         public Dictionary<string, string> reportsHolder = new Dictionary<string, string>();
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public MainWindow()
@@ -44,7 +47,7 @@ namespace SpeedBump
             DataContext = this;
            // this.status_BT.ButtonClicked += Status_BT_ButtonClicked;
             Reload();
-            sv.ReportViewerToggle += Sv_ReportViewerToggle;
+            //sv.ReportViewerToggle += Sv_ReportViewerToggle;
 
         }
 
@@ -111,9 +114,11 @@ namespace SpeedBump
 
         public void Reload()
         {
+
             log.Debug("Reload called");
+            checkcount = 0;
             projectRowsPanel.Children.Clear();
-            ProjectControlSource source = PersistableJson.Load<ProjectControlSource>();
+            source = PersistableJson.Load<ProjectControlSource>();
             log.Debug(source.Items + "items are in the project control source");
             foreach (ProjectControlSourceItem item in source.Items)
             {
@@ -122,7 +127,7 @@ namespace SpeedBump
                 row.StatusUpdated += Row_StatusUpdated;
                 row.StartTask += Row_StartTask;
                 row.EndTask += Row_EndTask;
-                row.SendReportButtonClick += Row_ToggleVis;
+               // row.SendReportButtonClick += Row_ToggleVis;
                 row.Reload(item, source);
                 row.trivialBump_RB.GroupName = "bumpGroup" + item.Project;
                 row.minorBump_RB.GroupName = "bumpGroup" + item.Project;
@@ -133,77 +138,89 @@ namespace SpeedBump
             }
             foreach (FTPHost host in source.FTPHosts)
             {
-                ServerChoices.Children.Add(new CheckBox { Content = host.IPAddress, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10,0,0,0)});
+                CheckBox ftpcheck = new CheckBox { Content = host.IPAddress, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
+                ftpcheck.DataContext = host;
+                ftpcheck.SetBinding(ToggleButton.IsCheckedProperty, "Checked");
+                ftpcheck.Checked += Ftpcheck_Checked;
+                ftpcheck.Unchecked += Ftpcheck_Unchecked;
+                if(host.Checked == true)
+                {
+                    checkcount++;
+                }
+                ServerChoices.Children.Add(ftpcheck);
             }
         }
 
-        private void Row_ToggleVis(object sender, NewReportEventArgs e)
+        private void Ftpcheck_Unchecked(object sender, RoutedEventArgs e)
         {
-            sv.scroll.Content = new TextBlock { Text = e.Report };
-            sv.Visibility = Visibility.Visible;
-            sv.HorizontalAlignment = HorizontalAlignment.Stretch;
-            sv.VerticalAlignment = VerticalAlignment.Stretch;
-            if (reportsToggle == true)
+            checkcount--;
+            if(checkcount == 0)
             {
-                foreach(ProjectControl row in projectRowsPanel.Children)
+                foreach(ProjectControl pc in projectRowsPanel.Children)
                 {
-                    row.innerPR.Visibility = Visibility.Collapsed;
-                    row.WarningStatus.Visibility = Visibility.Collapsed;
+                    pc.DeployButton.IsEnabled = false;
                 }
-                topBar.Visibility = Visibility.Collapsed;
-                reportsToggle = !reportsToggle;
-            }
-            else
-            {
-                foreach (ProjectControl row in projectRowsPanel.Children)
-                {
-                    row.innerPR.Visibility = Visibility.Visible;
-                    row.WarningStatus.Visibility = Visibility.Visible;
-                }
-                topBar.Visibility = Visibility.Visible;
-                reportsToggle = !reportsToggle;
             }
         }
+
+        private void Ftpcheck_Checked(object sender, RoutedEventArgs e)
+        {
+            checkcount++;
+            if (checkcount > 0)
+            {
+                foreach (ProjectControl pc in projectRowsPanel.Children)
+                {
+                    pc.DeployButton.IsEnabled = true;
+                }
+            }
+        }
+
+        /*  private void Row_ToggleVis(object sender, NewReportEventArgs e)
+          {
+              sv.scroll.Content = new TextBlock { Text = e.Report };
+              sv.Visibility = Visibility.Visible;
+              sv.HorizontalAlignment = HorizontalAlignment.Stretch;
+              sv.VerticalAlignment = VerticalAlignment.Stretch;
+              if (reportsToggle == true)
+              {
+                  foreach(ProjectControl row in projectRowsPanel.Children)
+                  {
+                      row.innerPR.Visibility = Visibility.Collapsed;
+                      row.WarningStatus.Visibility = Visibility.Collapsed;
+                  }
+                  topBar.Visibility = Visibility.Collapsed;
+                  reportsToggle = !reportsToggle;
+              }
+              else
+              {
+                  foreach (ProjectControl row in projectRowsPanel.Children)
+                  {
+                      row.innerPR.Visibility = Visibility.Visible;
+                      row.WarningStatus.Visibility = Visibility.Visible;
+                  }
+                  topBar.Visibility = Visibility.Visible;
+                  reportsToggle = !reportsToggle;
+              }
+          }*/
 
         private void Row_StatusUpdated(object sender, NewReportEventArgs e)
         {
-            string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
-            Regex warningCheck = new Regex(pattern);
-            /*if (e.Report.Contains("Build FAILED") || e.Report.Contains("MSBUILD : error"))
-            {
-                status_BT.Status = new BitmapImage(new Uri("Images\\Error Circle.png", UriKind.Relative));
-                status_BT.Status.Freeze();
-            }
-            else if (warningCheck.IsMatch(e.Report))
-            {
-                status_BT.Status = new BitmapImage(new Uri("Images\\Warning Circle.png", UriKind.Relative));
-                status_BT.Status.Freeze();
-            }
-            else if (e.Report.Contains("Build succeeded"))
-            {
-                status_BT.Status = new BitmapImage(new Uri("Images\\Good Circle.png", UriKind.Relative));
-                status_BT.Status.Freeze();
-            }*/
-            if (reportsHolder.ContainsKey(e.Name))
-            {
-                reportsHolder[e.Name] = e.Report;
-            }
-            else reportsHolder.Add(e.Name, e.Report);
+            Report = e.Report;
         }
         private void Row_StartTask(object sender, EventArgs e)
         {
-            runAllProjects.IsEnabled = false;
+           // runAllProjects.IsEnabled = false;
         }
         private void Row_EndTask(object sender, EventArgs e)
         {
-            runAllProjects.IsEnabled = true;
+           // runAllProjects.IsEnabled = true;
         }
 
         private void runAllProjects_Click(object sender, RoutedEventArgs e)
         {
             log.Debug("[USER ACTION] Run all projects called");
             List<Task> TaskList = new List<Task>();
-            runAllProjects.IsEnabled = false;
+            //runAllProjects.IsEnabled = false;
             List<string> checkedboxes = new List<string>();
             foreach (CheckBox cb in ServerChoices.Children)
             {
@@ -286,7 +303,7 @@ namespace SpeedBump
                         child.runAll_BT.IsEnabled = true;
                         child.run_BT.IsEnabled = true;
                     }
-                    runAllProjects.IsEnabled = true;
+                    //runAllProjects.IsEnabled = true;
                 }, new System.Threading.CancellationToken(), TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
             }
             else
@@ -296,9 +313,14 @@ namespace SpeedBump
                     child.runAll_BT.IsEnabled = true;
                     child.run_BT.IsEnabled = true;
                 }
-                runAllProjects.IsEnabled = true;
+                //runAllProjects.IsEnabled = true;
             }
          }
-     }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            source.Save();
+        }
+    }
  }
 

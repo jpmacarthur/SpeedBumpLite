@@ -11,5 +11,6 @@ namespace SpeedBump
         public string IPAddress { get; set; }
         public string Password { get; set; }
         public string Username { get; set; }
+        public bool Checked { get; set; }
     }
 }

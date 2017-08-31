@@ -39,6 +39,7 @@ namespace SpeedBump
         public event EventHandler StartTask;
         public event EventHandler EndTask;
         public event NewReportEventHandler SendReportButtonClick;
+        DeploymentManager bumper;
 
         public Task runAll;
         public ProjectControl()
@@ -51,9 +52,9 @@ namespace SpeedBump
 
         public void DisableUI()
         {
-            runAll_BT.IsEnabled = false;
-            run_BT.IsEnabled = false;
-            RebuiltButton.IsEnabled = false;
+            RunOptions.Visibility = Visibility.Collapsed;
+            WorkingBar.Visibility = Visibility.Visible;
+
             WarningStatus.Status = new BitmapImage(new Uri("Images\\yellow-circle.png", UriKind.Relative));
             if (this.StartTask != null)
             {
@@ -66,9 +67,8 @@ namespace SpeedBump
             {
                 this.EndTask(this, new EventArgs());
             }
-            runAll_BT.IsEnabled = true;
-            run_BT.IsEnabled = true;
-            RebuiltButton.IsEnabled = true;
+            RunOptions.Visibility = Visibility.Visible;
+            WorkingBar.Visibility = Visibility.Collapsed;
         }
         private void Reports_BT_Click(object sender, RoutedEventArgs e)
         {
@@ -87,6 +87,7 @@ namespace SpeedBump
             this.item = item;
             projectLabel.Content = item.Project;
             Timestamp = item.Timestamp;
+            bumper = new DeploymentManager(source, item);
             UpdateVersion();
 
             
@@ -260,10 +261,7 @@ namespace SpeedBump
                     {
                         success = false;
                     }
-                    /*  if (this.StatusUpdated != null)
-                      {
-                          this.StatusUpdated(this, new NewReportEventArgs(Report, pjContent));
-                      }*/
+
                 }
                 catch (Exception ex)
                 {
@@ -345,6 +343,156 @@ namespace SpeedBump
                 WarningStatus.Status = new BitmapImage(new Uri("Images\\red-circle.png", UriKind.Relative));
                 WarningStatus.Status.Freeze();
             }
+        }
+
+        private void CleanButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool success = true;
+            DeploymentManager bumper = new DeploymentManager(source,item);
+            DisableUI();
+            Task clean = Task.Factory.StartNew(() => {
+                try
+                {
+                    bumper.Prepare();
+                    bumper.Clean();
+                }
+                catch (Exception ex)
+                {
+                    success = false;
+                    if (this.StatusUpdated != null)
+                    {
+                        this.StatusUpdated(this, new NewReportEventArgs(ex.ToString()));
+                    }
+                }
+            });
+            Task clean_ui = clean.ContinueWith((antecedent) =>
+            {
+                EnableUI();
+                setStatus(success);
+
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private void BuildButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool success = true;
+            DeploymentManager bumper = new DeploymentManager(source, item);
+            DisableUI();
+            string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
+            Regex warningCheck = new Regex(pattern);
+            Task build = Task.Factory.StartNew(() => {
+                try
+                {
+                    bumper.Prepare();
+                    bumper.Clean();
+                    string temp = bumper.Build();
+                    if (temp.Contains("Build FAILED") || temp.Contains("MSBUILD : error"))
+                    {
+                        success = false;
+                        if (this.StatusUpdated != null)
+                        {
+                            this.StatusUpdated(this, new NewReportEventArgs(temp));
+                        }
+                    }
+                    else if (warningCheck.IsMatch(temp))
+                    {
+                        success = false;
+                        if (this.StatusUpdated != null)
+                        {
+                            this.StatusUpdated(this, new NewReportEventArgs(temp));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    success = false;
+                    if (this.StatusUpdated != null)
+                    {
+                        this.StatusUpdated(this, new NewReportEventArgs(ex.ToString()));
+                    }
+                }
+            });
+            Task clean_ui = build.ContinueWith((antecedent) =>
+            {
+                EnableUI();
+                setStatus(success);
+
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private void BumpButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool success = true;
+            string bumpChoice = "unknown";
+            if (majorBump_RB.IsChecked == true) { bumpChoice = "Major"; }
+            else if (minorBump_RB.IsChecked == true) { bumpChoice = "Minor"; }
+            else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
+            try
+            {
+                Task<Versioning.Version> bump = Task.Factory.StartNew(() =>
+                {
+                    return bumper.Bump(bumpChoice);
+                });
+                Task bump_ui = bump.ContinueWith((antecedent) =>
+                {
+                    Version = antecedent.Result.getVersion();
+                    Timestamp = DateTime.UtcNow;
+                    item.Timestamp = Timestamp;
+                    source.Save();
+                    EnableUI();
+                    setStatus(true);
+                }, TaskScheduler.FromCurrentSynchronizationContext());
+            }
+            catch (AggregateException ex) {
+                success = false;
+                if (this.StatusUpdated != null)
+                {
+                    this.StatusUpdated(this, new NewReportEventArgs(ex.Flatten().ToString()));
+                }
+            }
+        }
+
+        private void DeployButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.StatusUpdated != null)
+            {
+                this.StatusUpdated(this, new NewReportEventArgs(""));
+            }
+            MainWindow parentwin = Application.Current.MainWindow as MainWindow;
+            log.Debug("[User Action] " + sender.ToString());
+            DisableUI();
+            List<string> checkedboxes = new List<string>();
+            foreach (CheckBox cb in parentwin.ServerChoices.Children)
+            {
+                if (cb.IsChecked == true)
+                {
+                    checkedboxes.Add(cb.Content.ToString());
+                }
+            }
+            bool success = true;
+            Task deploy = Task.Factory.StartNew(() => {
+                try
+                {
+                    foreach (string address in checkedboxes)
+                    {
+                        bumper.Deploy(address);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    success = false;
+                    if (this.StatusUpdated != null)
+                    {
+                        this.StatusUpdated(this, new NewReportEventArgs(ex.ToString()));
+                    }
+                }
+            });
+            Task deploy_ui = deploy.ContinueWith((antecedent) =>
+            {
+                setStatus(success);
+                EnableUI();
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
     }
 }
