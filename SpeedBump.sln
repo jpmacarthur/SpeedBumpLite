@@ -1,12 +1,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedBump", "SpeedBump\SpeedBump.csproj", "{F93937E4-754C-4B6C-8BE3-186EDB4B4B7D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedBumpTest", "SpeedBumpTest\SpeedBumpTest.csproj", "{90344ED9-8B34-473B-B185-020B0561C554}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\..\..\..\..\Dev\Projects\Common\Common\Common.csproj", "{93B99F2A-4455-4BB1-AC03-19D262225964}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\..\..\Documents\Visual Studio 2017\Projects\Common\Common\Common.csproj", "{93B99F2A-4455-4BB1-AC03-19D262225964}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

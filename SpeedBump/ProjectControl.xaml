@@ -9,41 +9,30 @@
     <Grid>
         <StackPanel Orientation="Horizontal" Name="projectRow" >
             <StackPanel Orientation="Horizontal" Name="innerPR" Margin="21,0,10,0">
-            <CheckBox Name="runAll_CB" VerticalAlignment="Center" Margin="5,0,0,0" Visibility="Collapsed"></CheckBox>
             <Label Name="projectLabel" Content="{Binding ProjectName}" VerticalAlignment="Center" Width="100"></Label>
             <Label Name="versionLabel" ToolTip="{Binding Timestamp}" Content="{Binding Version}" VerticalAlignment="Center" Width="70"></Label>
             <StackPanel Orientation="Horizontal" Name="bumpTogglePanel" VerticalAlignment="Center" Margin="0,0,4,0">
                 <RadioButton Width="60" Name="majorBump_RB"  Content="Major"></RadioButton>
                 <RadioButton Width="60" Name="minorBump_RB"  Content="Minor"></RadioButton>
                 <RadioButton Width="60" Name="trivialBump_RB"  Content="Trivial" IsChecked="True"></RadioButton>
-
             </StackPanel>
-            <ComboBox Name="actionDropdown" VerticalAlignment="Center" Margin="0,0,10,0" Width="70" Visibility="Collapsed">
-                <ComboBoxItem IsSelected="True"></ComboBoxItem>
-                <ComboBoxItem>Prepare</ComboBoxItem>
-                <ComboBoxItem>Clean</ComboBoxItem>
-                <ComboBoxItem>Bump</ComboBoxItem>
-                <ComboBoxItem>Build</ComboBoxItem>
-                <ComboBoxItem>Deploy</ComboBoxItem>
-            </ComboBox>
-                <StackPanel Name="RunOptions" Orientation="Horizontal">
-                    <Button Name="CleanButton" Background="Transparent" BorderThickness="2" BorderBrush="#FFF50000" Height="40" Click="CleanButton_Click" Margin="0,0,7,0">
-                        <Image Source="Images\CleanIcon.png" Opacity="1"></Image>
-                    </Button>
-                    <Button Name="BuildButton" Background="Transparent" BorderBrush="#FF193266" BorderThickness="2" Height="40" Click="BuildButton_Click" Margin="0,0,7,0">
-                        <Image Source="Images\BuildButton.png"></Image>
-                    </Button>
-                    <Button Name="BumpButton" Background="Transparent" BorderBrush="DarkSeaGreen" BorderThickness="2" Height="40" Click="BumpButton_Click" Margin="0,0,7,0">
-                        <Image Source="Images\bump.png"></Image>
-                    </Button>
-                    <Button Name="DeployButton" Background="Transparent" BorderBrush="#FFDEDE23" BorderThickness="2" Height="40" Click="DeployButton_Click">
-                        <Image Source="Images\deploy-icon.png"></Image>
-                    </Button>
-                    <ProgressBar Name="WorkingBar" Minimum="0" Maximum="100" IsIndeterminate="True" Visibility="Collapsed" Height="15" Width="100"></ProgressBar>
+            <StackPanel Name="RunOptions" Orientation="Horizontal">
+                <Button Name="CleanButton" Background="Transparent" BorderThickness="2" BorderBrush="#FFF50000" Height="40" Click="CleanButton_Click" Margin="0,0,7,0">
+                    <Image Source="Images\CleanIcon.png" Opacity="1"></Image>
+                </Button>
+                <Button Name="BuildButton" Background="Transparent" BorderBrush="#FF193266" BorderThickness="2" Height="40" Click="BuildButton_Click" Margin="0,0,7,0">
+                    <Image Source="Images\BuildButton.png"></Image>
+                </Button>
+                <Button Name="BumpButton" Background="Transparent" BorderBrush="DarkSeaGreen" BorderThickness="2" Height="40" Click="BumpButton_Click" Margin="0,0,7,0">
+                    <Image Source="Images\bump.png"></Image>
+                </Button>
+                <Button Name="DeployButton" Background="Transparent" BorderBrush="#FFDEDE23" BorderThickness="2" Height="40" Click="DeployButton_Click">
+                    <Image Source="Images\deploy-icon.png"></Image>
+                </Button>
                 </StackPanel>
-            <Button Content="Rebuild" Name="RebuiltButton" VerticalAlignment="Center" Width="60" Margin="0,0,10,0" Click="RebuiltButton_Click" Visibility="Collapsed"></Button>
-                <Button Content="Run" Name="run_BT" VerticalAlignment="Center" Width="60" Margin="0,0,10,0" Click="run_BT_Click" Visibility="Collapsed"></Button>
-                <Button Content="Run All" Name="runAll_BT" VerticalAlignment="Center" Width="60" Click="runAll_BT_Click" Visibility="Collapsed"></Button>
+                <Grid Height="40" Width="181" Name="WorkingBar" Visibility="Collapsed">
+                    <ProgressBar Minimum="0" Maximum="100" IsIndeterminate="True" VerticalAlignment="Center" HorizontalAlignment="Stretch" Height="15"/>
+                </Grid>
             </StackPanel>
             <local:Warning Margin="0,0,0,0" x:Name="WarningStatus" VerticalAlignment="Center"></local:Warning>
         </StackPanel>

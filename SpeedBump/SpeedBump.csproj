@@ -203,7 +203,7 @@
     <Resource Include="Images\CleanIcon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\Dev\Projects\Common\Common\Common.csproj">
+    <ProjectReference Include="..\..\..\..\Documents\Visual Studio 2017\Projects\Common\Common\Common.csproj">
       <Project>{93b99f2a-4455-4bb1-ac03-19d262225964}</Project>
       <Name>Common</Name>
     </ProjectReference>
