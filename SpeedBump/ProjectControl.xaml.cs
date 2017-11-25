@@ -19,6 +19,8 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using LCP.Common.UI;
 using System.Threading;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace SpeedBump
 {
@@ -82,9 +84,9 @@ namespace SpeedBump
 
         public void UpdateVersion()
         {
-            MyFile assembly = ver.OpenAssemblyInfo(source.BaseDir + item.BaseDir +@"\" + item.StageDir);
-            Versioning.Version itemVersion = ver.getchildVersion(assembly);
-            Version = itemVersion.getVersion();
+            string path = source.BaseDir + item.BaseDir + @"\version.json";
+            Deployment.JSONVersion jSONVersion = JsonConvert.DeserializeObject<Deployment.JSONVersion>(File.ReadAllText(path));
+            Version = jSONVersion.Version;
         }
         
         public void setStatus(bool passed)
@@ -102,116 +104,9 @@ namespace SpeedBump
             }
         }
 
-        private void CleanButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.StatusUpdated != null)
-            {
-                this.StatusUpdated(this, new NewReportEventArgs(""));
-            }
-            bool success = true;
-            DeploymentManager bumper = new DeploymentManager(source,item);
-            DisableUI();
-            Task clean = Task.Factory.StartNew(() => {
-                try
-                {
-                    bumper.Prepare();
-                    bumper.Clean();
-                }
-                catch (Exception ex)
-                {
-                    success = false;
-                    if (this.StatusUpdated != null)
-                    {
-                        this.StatusUpdated(this, new NewReportEventArgs(ex.ToString()));
-                    }
-                }
-            });
-            Task clean_ui = clean.ContinueWith((antecedent) =>
-            {
-                EnableUI();
-                setStatus(success);
 
-            }, TaskScheduler.FromCurrentSynchronizationContext());
-        }
 
-        private void BuildButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.StatusUpdated != null)
-            {
-                this.StatusUpdated(this, new NewReportEventArgs(""));
-            }
-            bool success = true;
-            if (taskcount > 0)
-            {
-                cancelsource.Cancel();
-                taskcount = 0;
-            }
-            cancelsource = new CancellationTokenSource();
-            canceltoken = cancelsource.Token;
-            DeploymentManager bumper = new DeploymentManager(source, item);
-            DisableUI();
-            string pattern = "[1-9]+?[0-9]?[ ][W][a][r]";
-            Regex warningCheck = new Regex(pattern);
-            Task build = Task.Factory.StartNew(() =>
-            {
-                try
-                {
-                    taskcount++;
-                    bumper.Prepare();
-                    bumper.Clean();
-                    string temp = bumper.Build();
-                    if (temp.Contains("Build FAILED") || temp.Contains("MSBUILD : error"))
-                    {
-                        success = false;
-                        if (this.StatusUpdated != null)
-                        {
-                            this.StatusUpdated(this, new NewReportEventArgs(temp));
-                        }
-                    }
-                    else if (warningCheck.IsMatch(temp))
-                    {
-                        success = false;
-                        if (this.StatusUpdated != null)
-                        {
-                            this.StatusUpdated(this, new NewReportEventArgs(temp));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    success = false;
-                    if (this.StatusUpdated != null)
-                    {
-                        this.StatusUpdated(this, new NewReportEventArgs(ex.ToString()));
-                    }
-                }
-            });
-            Task clean_ui = build.ContinueWith((antecedent) =>
-            {
-                EnableUI();
-                setStatus(success);
 
-            }, TaskScheduler.FromCurrentSynchronizationContext());
-         
-                Task<int> waiting = clean_ui.ContinueWith((antecedent) =>
-                {
-                    if (success)
-                    {
-                        Thread.Sleep(5000);
-                    }
-                        return 1;
-                }, TaskScheduler.Default);
-                Task waitingcontinue = waiting.ContinueWith((antecedent) =>
-                {
-                    if (success)
-                    {
-                        if (canceltoken.IsCancellationRequested) { return; }
-                        WarningStatus.Status = new BitmapImage(new Uri("Images\\gray-circle.png", UriKind.Relative));
-                        WarningStatus.Status.Freeze();
-                    }
-                    taskcount--;
-                }, canceltoken, TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
-        }
 
         private void BumpButton_Click(object sender, RoutedEventArgs e)
         {
@@ -226,13 +121,13 @@ namespace SpeedBump
             else if (trivialBump_RB.IsChecked == true) { bumpChoice = "Trivial"; }
             try
             {
-                Task<Versioning.Version> bump = Task.Factory.StartNew(() =>
+                Task<Deployment.JSONVersion> bump = Task.Factory.StartNew(() =>
                 {
                     return bumper.Bump(bumpChoice);
                 });
                 Task bump_ui = bump.ContinueWith((antecedent) =>
                 {
-                    Version = antecedent.Result.getVersion();
+                    Version = antecedent.Result.Version;
                     Timestamp = DateTime.UtcNow;
                     item.Timestamp = Timestamp;
                     source.Save();

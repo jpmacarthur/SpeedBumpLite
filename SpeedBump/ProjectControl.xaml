@@ -17,13 +17,7 @@
                 <RadioButton Width="60" Name="trivialBump_RB"  Content="Trivial" IsChecked="True"></RadioButton>
             </StackPanel>
             <StackPanel Name="RunOptions" Orientation="Horizontal">
-                <Button Name="CleanButton" Background="Transparent" BorderThickness="2" BorderBrush="#FFF50000" Height="40" Click="CleanButton_Click" Margin="0,0,7,0">
-                    <Image Source="Images\CleanIcon.png" Opacity="1"></Image>
-                </Button>
-                <Button Name="BuildButton" Background="Transparent" BorderBrush="#FF193266" BorderThickness="2" Height="40" Click="BuildButton_Click" Margin="0,0,7,0">
-                    <Image Source="Images\BuildButton.png"></Image>
-                </Button>
-                <Button Name="BumpButton" Background="Transparent" BorderBrush="DarkSeaGreen" BorderThickness="2" Height="40" Click="BumpButton_Click" Margin="0,0,7,0">
+                    <Button Name="BumpButton" Background="Transparent" BorderBrush="DarkSeaGreen" BorderThickness="2" Height="40" Click="BumpButton_Click" Margin="0,0,7,0">
                     <Image Source="Images\bump.png"></Image>
                 </Button>
                 <Button Name="DeployButton" Background="Transparent" BorderBrush="#FFDEDE23" BorderThickness="2" Height="40" Click="DeployButton_Click">
