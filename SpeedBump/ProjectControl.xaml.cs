@@ -21,6 +21,7 @@ using LCP.Common.UI;
 using System.Threading;
 using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SpeedBump
 {
@@ -49,6 +50,7 @@ namespace SpeedBump
             InitializeComponent();
             DataContext = this;
             WarningStatus.Status = new BitmapImage(new Uri("Images\\gray-circle.png",UriKind.Relative));
+
         }
 
         public void DisableUI()
@@ -79,6 +81,7 @@ namespace SpeedBump
             projectLabel.Content = item.Project;
             Timestamp = item.Timestamp;
             bumper = new DeploymentManager(source, item);
+            JSONinit();
             UpdateVersion();
         }
 
@@ -123,7 +126,9 @@ namespace SpeedBump
             {
                 Task<Deployment.JSONVersion> bump = Task.Factory.StartNew(() =>
                 {
-                    return bumper.Bump(bumpChoice);
+
+                        return bumper.Bump(bumpChoice); 
+                    
                 });
                 Task bump_ui = bump.ContinueWith((antecedent) =>
                 {
@@ -212,6 +217,23 @@ namespace SpeedBump
                 WarningStatus.Status.Freeze();
                 taskcount--;
             }, canceltoken, TaskContinuationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+        public void JSONinit()
+        {
+            string path = source.BaseDir + item.BaseDir + @"\version.json";
+            log.Debug(path);
+            if (!File.Exists(path))
+            {
+                JObject versionjson = new JObject(
+                    new JProperty("version", "0.0.0.0"));
+
+                // write JSON directly to a file
+                using (StreamWriter file = File.CreateText(path))
+                using (JsonTextWriter writer = new JsonTextWriter(file))
+                {
+                    versionjson.WriteTo(writer);
+                }
+            }
         }
     }
 }

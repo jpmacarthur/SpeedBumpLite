@@ -24,7 +24,7 @@
                     <Image Source="Images\deploy-icon.png"></Image>
                 </Button>
                 </StackPanel>
-                <Grid Height="40" Width="181" Name="WorkingBar" Visibility="Collapsed">
+                <Grid Height="40" Width="85" Name="WorkingBar" Visibility="Collapsed">
                     <ProgressBar Minimum="0" Maximum="100" IsIndeterminate="True" VerticalAlignment="Center" HorizontalAlignment="Stretch" Height="15"/>
                 </Grid>
             </StackPanel>
